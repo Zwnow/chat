@@ -1,22 +1,26 @@
 package handler
 
 import (
+	"context"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/Zwnow/chat_service/db"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Message struct {
-	ID         string    `json:"id" bson:"_id"`
-	SenderID   string    `json:"sender_id" bson:"sender_id"`
-	ReceiverID string    `json:"receiver_id" bson:"receiver_id"`
-	Content    string    `json:"content" bson:"content"`
-	Timestamp  time.Time `json:"timestamp" bson:"timestamp"`
+	ID       primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	SenderID string             `json:"user_id" bson:"user_id"`
+	// ReceiverID string    `json:"receiver_id" bson:"receiver_id"`
+	Content   string    `json:"content" bson:"content"`
+	Timestamp time.Time `json:"timestamp" bson:"timestamp"`
 }
 
 func StoreMessage(c *gin.Context) {
+	log.Println("Got store request")
 	var msg Message
 	if err := c.ShouldBindJSON(&msg); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -25,8 +29,12 @@ func StoreMessage(c *gin.Context) {
 
 	msg.Timestamp = time.Now()
 
-	_, err := db.MessageCollection.InsertOne(c, msg)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := db.MessageCollection.InsertOne(ctx, msg)
 	if err != nil {
+		log.Println("Database insert error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save message"})
 		return
 	}

@@ -14,14 +14,16 @@ var Connections = make(map[string]*websocket.Conn)
 
 type Message struct {
 	UserID  string `json:"user_id"`
-	Message string `json:"message"`
+	Content string `json:"content"`
 }
 
 func SaveMessage(userID string, message []byte) error {
 	messageData := Message{
 		UserID:  userID,
-		Message: string(message),
+		Content: string(message),
 	}
+
+	log.Printf("Message to store: %+v", messageData)
 
 	messageJSON, err := json.Marshal(messageData)
 	if err != nil {
@@ -29,6 +31,7 @@ func SaveMessage(userID string, message []byte) error {
 		return fmt.Errorf("failed to marshal message: %v", err)
 	}
 
+	log.Printf("Sending request")
 	resp, err := http.Post("http://chat-service:8081/messages", "application/json", bytes.NewBuffer(messageJSON))
 	if err != nil {
 		log.Printf("Error making HTTP request: %v", err)
