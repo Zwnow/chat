@@ -12,11 +12,11 @@ import (
 )
 
 type Message struct {
-	ID       primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	SenderID string             `json:"user_id" bson:"user_id"`
-	// ReceiverID string    `json:"receiver_id" bson:"receiver_id"`
-	Content   string    `json:"content" bson:"content"`
-	Timestamp time.Time `json:"timestamp" bson:"timestamp"`
+	ID         primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	SenderID   string             `json:"user_id" bson:"user_id"`
+	ReceiverID string             `json:"receiver_id" bson:"receiver_id"`
+	Content    string             `json:"content" bson:"content"`
+	Timestamp  time.Time          `json:"timestamp" bson:"timestamp"`
 }
 
 func StoreMessage(c *gin.Context) {

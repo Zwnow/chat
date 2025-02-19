@@ -24,13 +24,20 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 	userID := r.URL.Query().Get("user_id")
 	if userID == "" {
 		log.Println("User ID not provided")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if c := db.Connections[userID]; c != nil {
+		log.Println("User already connected")
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	db.Connections[userID] = conn
-	log.Printf("User %s connected\n", userID)
 
 	go service.ListenForMessages(conn, userID)
 
+	// Keep the connection open
 	select {}
 }
