@@ -1,5 +1,5 @@
 services:
-	sudo docker-compose up --build | grep -E 'websocket-service-1|chat-service-1'
+	docker-compose up --build
 
 db:
-	sudo docker exec -it chat-mongo-1 mongosh
+	docker exec -it chat-mongo-1 mongosh

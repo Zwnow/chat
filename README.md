@@ -22,7 +22,7 @@ has:
 - and finally a `db/db.go` file which is responsible to send a http post request to the `chat service` for storing messages
 
 ## Usage
-Start up the containers and then use this command to create websocket connections:`wscat -c ws://localhost:8082/ws?user_id=user1`, adjust the userID for each connection.
+Start up the containers and then use this command to create websocket connections:`wscat -c "ws://localhost:8082/ws?user_id=user1" -H "Authorization: 123" `, adjust the userID for each connection.
 
 Send messages in this format `receiverID message`
 
