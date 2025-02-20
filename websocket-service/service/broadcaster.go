@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func ListenForMessages(conn *websocket.Conn, userID string) {
+func ListenForMessages(conn *websocket.Conn, userID, chatroomID string) {
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
@@ -17,7 +17,7 @@ func ListenForMessages(conn *websocket.Conn, userID string) {
 			break
 		}
 
-		err = db.SaveMessage(userID, string(message))
+		err = db.SaveMessage(userID, chatroomID, string(message))
 		if err != nil {
 			log.Printf("Failed to save message: %v", err)
 		}

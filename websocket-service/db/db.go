@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 
@@ -18,14 +19,16 @@ type ChatroomConnection struct {
 var Connections = make(map[string]ChatroomConnection)
 
 type Message struct {
-	UserID  string `json:"user_id"`
-	Content string `json:"content"`
+	UserID     string `json:"user_id"`
+	ChatroomID string `json:"chatroom_id"`
+	Content    string `json:"content"`
 }
 
-func SaveMessage(userID, message string) error {
+func SaveMessage(userID, chatroomID, message string) error {
 	messageData := Message{
-		UserID:  userID,
-		Content: message,
+		UserID:     userID,
+		ChatroomID: chatroomID,
+		Content:    message,
 	}
 
 	messageJSON, err := json.Marshal(messageData)
@@ -34,19 +37,49 @@ func SaveMessage(userID, message string) error {
 		return fmt.Errorf("failed to marshal message: %v", err)
 	}
 
-	resp, err := http.Post("http://chat-service:8081/messages", "application/json", bytes.NewBuffer(messageJSON))
+	resp, err := http.Post("http://chat-service:8081/api/messages", "application/json", bytes.NewBuffer(messageJSON))
 	if err != nil {
 		log.Printf("Error making HTTP request: %v", err)
 		return fmt.Errorf("failed to send message to chat service: %v", err)
 	}
 	defer resp.Body.Close()
 
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error reading response body: %v", err)
+		return fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	var resData map[string]interface{}
+	err = json.Unmarshal(body, &resData)
+	if err != nil {
+		log.Printf("Error unmarshalling response body: %v", err)
+		return fmt.Errorf("failed to unmarshal response body: %v", err)
+	}
+
+	log.Printf("Response data: %+v", resData)
+
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		log.Printf("Message from %s successfully saved: %s", userID, message)
 	} else {
-		log.Printf("Failed to save message, HTTP status: %d", resp.StatusCode)
+		log.Printf("Failed to save message, HTTP status: %d, Response: %v", resp.StatusCode, resp)
 		return fmt.Errorf("failed to save message, HTTP status: %d", resp.StatusCode)
 	}
 
 	return nil
+}
+
+func UserHasChatroom(userID, chatroomID string) error {
+	resp, err := http.Get(fmt.Sprintf("http://chat-service:8081/api/%s/%s", userID, chatroomID))
+	if err != nil {
+		log.Printf("Error making HTTP request: %v", err)
+		return fmt.Errorf("failed to send message to chat service: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 200 {
+		return nil
+	} else {
+		return fmt.Errorf("user does not have that chatroom")
+	}
 }

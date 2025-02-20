@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -21,8 +23,10 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	userID := r.URL.Query().Get("user_id")
-	if userID == "" {
+	claimsJSON := r.Header.Get("X-Claims")
+
+	userID, err := getUserIdFromClaims(claimsJSON)
+	if userID == "" || err != nil {
 		log.Println("User ID not provided")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -43,8 +47,23 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 
 	db.Connections[userID] = db.ChatroomConnection{Conn: conn, ChatroomID: chatroom}
 
-	go service.ListenForMessages(conn, userID)
+	go service.ListenForMessages(conn, userID, chatroom)
 
 	// Keep the connection open
 	select {}
+}
+
+func getUserIdFromClaims(claimsJSON string) (string, error) {
+	var claims map[string]interface{}
+	err := json.Unmarshal([]byte(claimsJSON), &claims)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+
+	userID, ok := claims["user_id"].(string)
+	if !ok {
+		return "", fmt.Errorf("no user id in map")
+	}
+	return userID, nil
 }

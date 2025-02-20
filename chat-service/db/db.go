@@ -27,5 +27,5 @@ func Init() {
 
 	log.Println("Connected to MongoDB")
 	MessageCollection = client.Database("chat_db").Collection("messages")
-	MessageCollection = client.Database("chat_db").Collection("chatrooms")
+	ChatroomCollection = client.Database("chat_db").Collection("chatrooms")
 }

@@ -28,7 +28,7 @@ Nginx is configured to first authenticate the request and then forward to the co
 
 ## Usage
 ### Usage currently does not work while I implement an auth system
-Start up the containers and then use this command to create websocket connections:`wscat -c "ws://localhost/ws?user_id=user1" -H "Authorization: 123" `, adjust the userID for each connection.
+Start up the containers and then use this command to create websocket connections:`wscat -c "ws://localhost/ws?chatroom=[chatroomID]" -H "Authorization: Bearer [JWT]" `.
 
 Send messages in this format `receiverID message`
 
@@ -36,15 +36,15 @@ Send messages in this format `receiverID message`
 
 I have never implemented any of this, I am trying to learn some system design with this project so this 100% does not serve as a good example for how to implement stuff!
 
-- User authentication JWT or OAuth 
-- User Service with Go & Postgress
+- [x] User authentication JWT or OAuth 
+- [x] User Service with Go & Postgress
 - [x] API Gateway with Nginx
 - Service discovery
 - Message queue with PubSub
 - Caching with redis
 
 ## Currently working on
-- Chatroom creation
 - Joining chatrooms
 - Message handling
+- Frontend
 

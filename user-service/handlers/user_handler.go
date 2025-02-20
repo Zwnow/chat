@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -88,7 +89,13 @@ func (uh *UserHandler) AuthenticateUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Token is valid", "claims": claims})
+	claimsJSON, err := json.Marshal(claims)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to serialize claims"})
+		return
+	}
+	c.Header("X-Claims", string(claimsJSON))
+	c.JSON(http.StatusOK, gin.H{"message": "Token is valid"})
 }
 
 func ValidateJWT(tokenString string) (*jwt.MapClaims, error) {

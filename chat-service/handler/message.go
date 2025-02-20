@@ -13,7 +13,7 @@ import (
 
 type Message struct {
 	ID         primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	ChatroomID primitive.ObjectID `json:"chatroom_id" bson:"chatroom_id"`
+	ChatroomID string             `json:"chatroom_id" bson:"chatroom_id"`
 	SenderID   string             `json:"user_id" bson:"user_id"`
 	Content    string             `json:"content" bson:"content"`
 	Timestamp  time.Time          `json:"timestamp" bson:"timestamp"`
