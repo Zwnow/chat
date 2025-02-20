@@ -21,11 +21,16 @@ has:
 - a `/service/broadcaster.go` file that provides a `ListenForMessages` handler. This is started in subroutines, waits for messages, triggers a call to store messages and finally broadcasts the message
 - and finally a `db/db.go` file which is responsible to send a http post request to the `chat service` for storing messages
 
+### User Service
+The user service is supposed to be responsible for registering and authenticating users. It uses `Postgres` as Database as it's a better fit for structured data than `MongoDB`.
+
+Nginx is configured to first authenticate the request and then forward to the correct recipient.
+
 ## Usage
-Start up the containers and then use this command to create websocket connections:`wscat -c "ws://localhost:8082/ws?user_id=user1" -H "Authorization: 123" `, adjust the userID for each connection.
+### Usage currently does not work while I implement an auth system
+Start up the containers and then use this command to create websocket connections:`wscat -c "ws://localhost/ws?user_id=user1" -H "Authorization: 123" `, adjust the userID for each connection.
 
 Send messages in this format `receiverID message`
-
 
 ## Planned
 
