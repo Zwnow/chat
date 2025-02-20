@@ -13,14 +13,13 @@ import (
 
 type Message struct {
 	ID         primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	ChatroomID primitive.ObjectID `json:"chatroom_id" bson:"chatroom_id"`
 	SenderID   string             `json:"user_id" bson:"user_id"`
-	ReceiverID string             `json:"receiver_id" bson:"receiver_id"`
 	Content    string             `json:"content" bson:"content"`
 	Timestamp  time.Time          `json:"timestamp" bson:"timestamp"`
 }
 
 func StoreMessage(c *gin.Context) {
-	log.Println("Got store request")
 	var msg Message
 	if err := c.ShouldBindJSON(&msg); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

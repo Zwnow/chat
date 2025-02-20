@@ -43,3 +43,8 @@ I have never implemented any of this, I am trying to learn some system design wi
 - Message queue with PubSub
 - Caching with redis
 
+## Currently working on
+- Chatroom creation
+- Joining chatrooms
+- Message handling
+

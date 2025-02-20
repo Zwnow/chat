@@ -3,7 +3,6 @@ package service
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/Zwnow/websocket_service/db"
 	"github.com/gorilla/websocket"
@@ -18,29 +17,18 @@ func ListenForMessages(conn *websocket.Conn, userID string) {
 			break
 		}
 
-		// Temporary requiring userId as target
-		parts := strings.Split(string(message), " ")
-		log.Printf("Parts: %v", parts)
-		if len(parts) >= 2 {
-			receiverID := parts[0]
-			log.Printf("ReceiverID: %s", receiverID)
-			msg := strings.Join(parts[1:], " ")
-			log.Printf("Message: %s", msg)
-
-			if err := db.SaveMessage(userID, receiverID, msg); err != nil {
-				log.Println("Error storing message:", err)
-			}
-			// Temporary requiring userId as target
-
-			BroadcastMessage(userID, receiverID, msg)
-		}
+		BroadcastMessage(userID, string(message))
 	}
 }
 
-func BroadcastMessage(senderID, receiverID, message string) {
-	conn := db.Connections[receiverID]
-	if conn == nil {
-		err := db.Connections[senderID].WriteMessage(websocket.TextMessage, []byte("[Error]: Receiver could not be found.\n"))
+func BroadcastMessage(senderID, message string) {
+	conn := db.Connections[senderID]
+
+	for userID, conn := range db.Connections {
+	}
+
+	if conn.Conn == nil {
+		err := db.Connections[senderID].Conn.WriteMessage(websocket.TextMessage, []byte("[Error]: Failed to send message."))
 		if err != nil {
 			log.Println("Write error:", err)
 			db.Connections[senderID].Close()

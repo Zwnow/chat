@@ -10,19 +10,22 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var Connections = make(map[string]*websocket.Conn)
-
-type Message struct {
-	UserID     string `json:"user_id"`
-	ReceiverID string `json:"receiver_id"`
-	Content    string `json:"content"`
+type ChatroomConnection struct {
+	Conn       *websocket.Conn
+	ChatroomID string
 }
 
-func SaveMessage(userID, receiverID, message string) error {
+var Connections = make(map[string]ChatroomConnection)
+
+type Message struct {
+	UserID  string `json:"user_id"`
+	Content string `json:"content"`
+}
+
+func SaveMessage(userID, message string) error {
 	messageData := Message{
-		UserID:     userID,
-		ReceiverID: receiverID,
-		Content:    message,
+		UserID:  userID,
+		Content: message,
 	}
 
 	messageJSON, err := json.Marshal(messageData)

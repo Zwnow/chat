@@ -8,7 +8,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var MessageCollection *mongo.Collection
+var (
+	MessageCollection  *mongo.Collection
+	ChatroomCollection *mongo.Collection
+)
 
 func Init() {
 	clientOptions := options.Client().ApplyURI("mongodb://mongo:27017")
@@ -24,4 +27,5 @@ func Init() {
 
 	log.Println("Connected to MongoDB")
 	MessageCollection = client.Database("chat_db").Collection("messages")
+	MessageCollection = client.Database("chat_db").Collection("chatrooms")
 }

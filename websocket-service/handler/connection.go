@@ -28,13 +28,20 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if c := db.Connections[userID]; c != nil {
+	chatroom := r.URL.Query().Get("chatroom")
+	if chatroom == "" {
+		log.Println("Chatroom not provided")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if c := db.Connections[userID]; c.Conn != nil {
 		log.Println("User already connected")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	db.Connections[userID] = conn
+	db.Connections[userID] = db.ChatroomConnection{Conn: conn, ChatroomID: chatroom}
 
 	go service.ListenForMessages(conn, userID)
 
