@@ -2,11 +2,12 @@ package services
 
 import (
 	"fmt"
-	"github.com/Zwnow/user_service/models"
-	"github.com/alexedwards/argon2id"
-    "gorm.io/gorm"
 	"log"
 	"math/rand"
+
+	"github.com/Zwnow/user_service/models"
+	"github.com/alexedwards/argon2id"
+	"gorm.io/gorm"
 )
 
 type UserService struct {
@@ -22,7 +23,7 @@ func hashPassword(password string) (string, error) {
 	return hash, nil
 }
 
-func matchPassword(password, hash string) (bool, error) {
+func (us *UserService) MatchPassword(password, hash string) (bool, error) {
 	return argon2id.ComparePasswordAndHash(password, hash)
 }
 
@@ -67,16 +68,16 @@ func (us *UserService) CreateUser(username, email, password string) (*models.Use
 }
 
 func (us *UserService) GetUserByEmail(email string) (*models.User, error) {
-    user := &models.User{}
-    if err := us.DB.Where("email = ?", email).First(user).Error; err != nil {
-        log.Println("Error fetching user by mail:", err)
-        return nil, err
-    }
-    return user, nil
+	user := &models.User{}
+	if err := us.DB.Where("email = ?", email).First(user).Error; err != nil {
+		log.Println("Error fetching user by mail:", err)
+		return nil, err
+	}
+	return user, nil
 }
 
 func (us *UserService) Migrate() {
-    if err := us.DB.AutoMigrate(&models.User{}); err != nil {
-        log.Fatalf("Could not migrate database: %v", err)
-    }
+	if err := us.DB.AutoMigrate(&models.User{}); err != nil {
+		log.Fatalf("Could not migrate database: %v", err)
+	}
 }

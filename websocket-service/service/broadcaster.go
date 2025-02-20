@@ -17,6 +17,11 @@ func ListenForMessages(conn *websocket.Conn, userID string) {
 			break
 		}
 
+		err = db.SaveMessage(userID, string(message))
+		if err != nil {
+			log.Printf("Failed to save message: %v", err)
+		}
+
 		BroadcastMessage(userID, string(message))
 	}
 }
@@ -24,22 +29,14 @@ func ListenForMessages(conn *websocket.Conn, userID string) {
 func BroadcastMessage(senderID, message string) {
 	conn := db.Connections[senderID]
 
-	for userID, conn := range db.Connections {
-	}
-
-	if conn.Conn == nil {
-		err := db.Connections[senderID].Conn.WriteMessage(websocket.TextMessage, []byte("[Error]: Failed to send message."))
-		if err != nil {
-			log.Println("Write error:", err)
-			db.Connections[senderID].Close()
-			delete(db.Connections, senderID)
-		}
-	} else {
-		err := conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("[%s]: %s", senderID, message)))
-		if err != nil {
-			log.Println("Write error:", err)
-			conn.Close()
-			delete(db.Connections, senderID)
+	for userID, chatroom := range db.Connections {
+		if senderID != userID && chatroom.ChatroomID == conn.ChatroomID {
+			err := chatroom.Conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%s~> %s", senderID, message)))
+			if err != nil {
+				log.Println("Write error:", err)
+				conn.Conn.Close()
+				delete(db.Connections, senderID)
+			}
 		}
 	}
 }

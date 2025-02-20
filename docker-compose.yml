@@ -19,8 +19,8 @@ services:
     build: ./user-service
     env_file:
       - .env
-    volumes:
-      - ./.env:/app/.env
+    #volumes:
+      #  - ./.env:/app/.env
     networks:
       - chat-app-network
     depends_on:
@@ -48,13 +48,12 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:z
     depends_on:
       - chat-service
       - websocket-service
     networks:
       - chat-app-network
-
 
 volumes:
   mongo-data:

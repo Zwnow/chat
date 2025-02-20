@@ -1,19 +1,16 @@
 package config
 
 import (
-	"log"
-    "os"
-
-	"github.com/joho/godotenv"
+	"os"
 )
 
 var PostgresURL string
 
 func LoadConfig() {
-	err := godotenv.Load("/app/.env")
-	if err != nil {
-        log.Fatalf("Error loading .env file: %v", err)
-	}
+	//err := godotenv.Load("/app/.env")
+	//if err != nil {
+	//	log.Fatalf("Error loading .env file: %v", err)
+	//}
 
-    PostgresURL = os.Getenv("POSTGRES_URL")
+	PostgresURL = os.Getenv("POSTGRES_URL")
 }
