@@ -33,7 +33,7 @@ I have never implemented any of this, I am trying to learn some system design wi
 
 - User authentication JWT or OAuth 
 - User Service with Go & Postgress
-- API Gateway with Nginx
+- [x] API Gateway with Nginx
 - Service discovery
 - Message queue with PubSub
 - Caching with redis

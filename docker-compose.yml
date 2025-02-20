@@ -15,6 +15,27 @@ services:
     depends_on:
       - chat-service
 
+  user-service:
+    build: ./user-service
+    env_file:
+      - .env
+    volumes:
+      - ./.env:/app/.env
+    networks:
+      - chat-app-network
+    depends_on:
+      - postgres
+  
+  postgres:
+    image: postgres:latest
+    env_file:
+      - .env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - chat-app-network
+
+
   mongo:
     image: mongo:latest
     networks:
@@ -37,6 +58,7 @@ services:
 
 volumes:
   mongo-data:
+  postgres-data:
 
 networks:
   chat-app-network:
