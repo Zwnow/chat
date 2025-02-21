@@ -1,35 +1,34 @@
-# Running
+# Learning System Design
+### A small chat app
 
-Use `docker-compose up --build` to run the services.
-If it works you can use `wscat -c ws://localhost:8082/ws?user_id=user1` to connect to a websocket.
-Obviously requires wscat
+# The why
+I can write code. That does not mean I can build systems. Especially not large ones.
+I want to learn more about system design. So far I have built smaller apps but I need
+to get out of my comfort zone and strive for bigger goals.
 
-## Services
+# The what
+I will build a small chat application. For this I am going to use a microservice
+architecture orchestrated with `docker`.
+For a small chat app, this very much is not the best architecture, but it serves as
+a learning project. The full stack I am going to use is this:
 
-### Chat Service
-The chat service is responsible for storing messages that users have sent and storing chatrooms created by users. It's connected to MongoDB to store data.
+- Nginx
+- Golang with [Gin](https://gin-gonic.com/) & [Gorilla Websocket](https://github.com/gorilla/websocket)
+- MongoDB for storing messages and chatrooms
+    - MongoDB is better suited for fast writes, which is important for a chat app
+- Postgres for storing userdata
 
-### Websocket Service
-The websocket service upgrades requests to a websocket connection. Upgrading a connection requires a valid authorization token and a chatroom either created by the user or joined by the user.
+The services I have built so far are:
+- User Service, for registration & login as well as validating user tokens
+- Chat Service, for creating chatrooms and storage/retrieval of messages
+- Websocket Service, for establishing live connections to chatrooms
 
-### User Service
-The user service allows registering and logging in. It also validates tokens.
+The frontend will be a simple Vue App with TailwindCSS for styling and Pinia for state management.
 
-### Nginx
-Nginx is configured to first authenticate the request and then forward to the correct recipient.
+# The who
+Hey, I'm Sven. I am a software dev, duh. Earlier in my life I used to draw a lot, tried tattooing too.
+Originally learned retail but changed careers a few years ago. Started out in ERP development with Business Central & Navision (Microsoft ERP applications) and quickly learned that I liked webdev far more. So I changed into a webdev career.
 
-## Planned
-I have never implemented any of this, I am trying to learn some system design with this project so this 100% does not serve as a good example for how to implement stuff!
-
-- [x] User authentication JWT or OAuth 
-- [x] User Service with Go & Postgress
-- [x] API Gateway with Nginx
-- Service discovery
-- Message queue with PubSub
-- Caching with redis
-
-## Currently working on
-- [x] Joining chatrooms
-- Message handling
-- [x] Frontend
+# About the app
+I will document the different parts of the app within their corresponding folders.
 
