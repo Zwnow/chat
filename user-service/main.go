@@ -30,6 +30,7 @@ func main() {
 	router.POST("/register", userHandler.RegisterUser)
 	router.POST("/login", userHandler.LoginUser)
 	router.GET("/validate-token", userHandler.AuthenticateUser)
+	router.GET("/:token", userHandler.GetUserID)
 
 	router.Run(":8080")
 }

@@ -36,9 +36,35 @@ func (uh *UserHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"user": user,
+	response := struct {
+		Username string `json:"username"`
+		Email    string `json:"email"`
+		ID       uint   `json:"id"`
+	}{
+		Username: user.Username,
+		Email:    user.Email,
+		ID:       user.ID,
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"user": response,
 	})
+}
+
+func (uh *UserHandler) GetUserID(c *gin.Context) {
+	jwt, _ := c.Params.Get("token")
+	if jwt == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request payload"})
+		return
+	}
+	claims, err := ValidateJWT(jwt)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, claims)
 }
 
 func (uh *UserHandler) LoginUser(c *gin.Context) {

@@ -57,16 +57,17 @@ type User struct {
 }
 
 func GetChatrooms(c *gin.Context) {
-	var user User
-	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	claimsJSON := c.GetHeader("X-Claims")
+	userID, err := getUserIdFromClaims(claimsJSON)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save chatroom"})
 		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	filter := bson.D{{Key: "user_id", Value: user.UserID}}
+	filter := bson.D{{Key: "user_id", Value: userID}}
 	cursor, err := db.ChatroomCollection.Find(ctx, filter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch chatrooms"})
@@ -78,6 +79,8 @@ func GetChatrooms(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch chatrooms"})
 		return
 	}
+
+	c.JSON(http.StatusOK, gin.H{"chatrooms": chatrooms})
 }
 
 func GetUserChatroom(c *gin.Context) {

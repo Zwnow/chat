@@ -23,11 +23,9 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	claimsJSON := r.Header.Get("X-Claims")
-
-	userID, err := getUserIdFromClaims(claimsJSON)
-	if userID == "" || err != nil {
-		log.Println("User ID not provided")
+	token := r.URL.Query().Get("token")
+	userID, err := db.GetUserFromToken(token)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

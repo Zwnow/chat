@@ -57,8 +57,6 @@ func SaveMessage(userID, chatroomID, message string) error {
 		return fmt.Errorf("failed to unmarshal response body: %v", err)
 	}
 
-	log.Printf("Response data: %+v", resData)
-
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		log.Printf("Message from %s successfully saved: %s", userID, message)
 	} else {
@@ -67,6 +65,28 @@ func SaveMessage(userID, chatroomID, message string) error {
 	}
 
 	return nil
+}
+
+func GetUserFromToken(token string) (string, error) {
+	resp, err := http.Get(fmt.Sprintf("http://user-service:8080/%s", token))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var resData map[string]interface{}
+	err = json.Unmarshal(body, &resData)
+	if err != nil {
+		log.Printf("Error unmarshalling response body: %v", err)
+		return "", err
+	}
+
+	return resData["user_id"].(string), nil
 }
 
 func UserHasChatroom(userID, chatroomID string) error {
