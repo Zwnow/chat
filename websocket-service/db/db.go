@@ -3,6 +3,7 @@ package db
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -74,19 +75,17 @@ func GetUserFromToken(token string) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	var data struct {
+		UserID string `json:"user_id"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
 		return "", err
+	} else if data.UserID == "" {
+		return "", errors.New("invalid request payload")
 	}
 
-	var resData map[string]interface{}
-	err = json.Unmarshal(body, &resData)
-	if err != nil {
-		log.Printf("Error unmarshalling response body: %v", err)
-		return "", err
-	}
-
-	return resData["user_id"].(string), nil
+	return data.UserID, nil
 }
 
 func UserHasChatroom(userID, chatroomID string) error {
