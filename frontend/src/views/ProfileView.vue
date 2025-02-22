@@ -32,16 +32,30 @@ const connect = async (chatroom: string) => {
         console.log(event);
     }
 }
+
+const form = ref({
+    name: ""
+})
 </script>
 
 <template>
-    <button @click="() => userStore.createChatroom()">Create chatroom</button>
+    <form class="w-[300px] border rounded-md flex flex-col p-4 gap-2"
+        @submit.prevent="() => userStore.createChatroom(form)">
+        <h1 class="text-lg font-bold">Create Chatroom</h1>
+        <fieldset class="flex flex-col gap-2">
+            <label for="name">Name</label>
+            <input class="p-2 border rounded-md" 
+                type="text" id="name" v-model="form.name" minlength="1" required>
+        </fieldset>
+        <button class="w-[100px] self-end bg-slate-300 shadow-md rounded-md px-2"
+            type="submit">Create</button>
+    </form>
     <div v-if="!loading" class="flex flex-col">
         Chatrooms:
         <ul>
             <div class="border w-[150px] p-2 rounded-md flex flex-col justify-center items-center" 
-                v-for="chatroom, index in userStore.chatrooms">
-                <p>Chatroom {{ index + 1 }}</p>
+                v-for="chatroom in userStore.chatrooms">
+                <p>{{ chatroom.name }}</p>
                 <button class="bg-slate-300 px-2 rounded-md shadow-md"
                 @click="() => connect(chatroom.id)">Connect</button>
             </div>

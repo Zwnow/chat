@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -49,19 +47,4 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 
 	// Keep the connection open
 	select {}
-}
-
-func getUserIdFromClaims(claimsJSON string) (string, error) {
-	var claims map[string]interface{}
-	err := json.Unmarshal([]byte(claimsJSON), &claims)
-	if err != nil {
-		log.Println(err)
-		return "", err
-	}
-
-	userID, ok := claims["user_id"].(string)
-	if !ok {
-		return "", fmt.Errorf("no user id in map")
-	}
-	return userID, nil
 }

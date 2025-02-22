@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -115,16 +114,13 @@ func (uh *UserHandler) AuthenticateUser(c *gin.Context) {
 		return
 	}
 
-	claimsJSON, err := json.Marshal(claims)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to serialize claims"})
-		return
-	}
-	c.Header("X-Claims", string(claimsJSON))
+	userID := claims["user_id"].(string)
+
+	c.Header("X-User-ID", userID)
 	c.JSON(http.StatusOK, gin.H{"message": "Token is valid"})
 }
 
-func ValidateJWT(tokenString string) (*jwt.MapClaims, error) {
+func ValidateJWT(tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -138,7 +134,7 @@ func ValidateJWT(tokenString string) (*jwt.MapClaims, error) {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return &claims, nil
+		return claims, nil
 	}
 
 	return nil, fmt.Errorf("invalid token")

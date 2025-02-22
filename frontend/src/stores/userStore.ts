@@ -1,11 +1,22 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
+type Chatroom = {
+    id: string
+    user_id: string
+    name: string
+    timestamp: string
+}
+
+type ChatroomForm = {
+    name: string
+}
+
 export const useUserStore = defineStore('user', () => {
     const token = ref<string>();
     const isAuthenticated = ref<boolean>(false);
     const userID = ref<string>();
-    const chatrooms = ref([]);
+    const chatrooms = ref<Chatroom[]>([]);
 
     const authenticate = async () => {
         const r = await fetch("http://localhost/validate-token", {
@@ -28,12 +39,14 @@ export const useUserStore = defineStore('user', () => {
         chatrooms.value = data.chatrooms;
     }
 
-    const createChatroom = async () => {
+    const createChatroom = async (form: ChatroomForm) => {
         const r = await fetch("http://localhost/api/chatroom", {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${token.value}`
-            }
+                "Authorization": `Bearer ${token.value}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(form)
         });
         if (r.status === 200) {
             await getChatrooms();
