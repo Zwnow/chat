@@ -16,6 +16,9 @@ func main() {
 	router.POST("/api/messages", handler.StoreMessage)
 	router.POST("/api/chatroom", handler.StoreChatroom)
 	router.GET("/api/chatroom", handler.GetChatrooms)
+	router.POST("/api/chatinvite", handler.StoreChatInvite)
+	router.GET("/api/chatinvite", handler.GetChatInvites)
+	router.POST("/api/chatinvite/answer", handler.AnswerChatInvite)
 	// router.GET("/api/:user/:chatroom", handler.GetUserChatroom)
 
 	fmt.Println("Chat Service running on port 8081")

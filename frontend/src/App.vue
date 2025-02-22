@@ -28,6 +28,8 @@ onMounted(async () => {
       <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/register">Register</RouterLink>
+
+        <RouterLink to="/invites">Invites</RouterLink>
       </nav>
     </div>
   </header>

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import ProfileView from '@/views/ProfileView.vue'
+import InviteView from '@/views/InviteView.vue'
 import { useUserStore } from '@/stores/userStore'
 
 const router = createRouter({
@@ -21,6 +22,11 @@ const router = createRouter({
       path: '/profile',
       name: 'profile',
       component: ProfileView,
+    },
+    {
+      path: '/invites',
+      name: 'invites',
+      component: InviteView,
     },
   ],
 })

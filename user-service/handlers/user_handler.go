@@ -63,7 +63,72 @@ func (uh *UserHandler) GetUserID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, claims)
+	user, err := uh.UserService.GetUserById(claims["user_id"].(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	responseData := struct {
+		UserID   uint   `json:"user_id"`
+		Username string `json:"username"`
+	}{
+		UserID:   user.ID,
+		Username: user.Username,
+	}
+
+	c.JSON(http.StatusOK, responseData)
+}
+
+func (uh *UserHandler) GetUserById(c *gin.Context) {
+	userID := c.Param("id")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	user, err := uh.UserService.GetUserById(userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	responseData := struct {
+		UserID   uint   `json:"user_id"`
+		Username string `json:"username"`
+	}{
+		UserID:   user.ID,
+		Username: user.Username,
+	}
+
+	c.JSON(http.StatusOK, responseData)
+}
+
+func (uh *UserHandler) GetUserByName(c *gin.Context) {
+	username := c.Param("name")
+	if username == "" {
+		log.Println("Name empty")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	user, err := uh.UserService.GetUserByName(username)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+	log.Println(user)
+
+	responseData := struct {
+		UserID   uint   `json:"user_id"`
+		Username string `json:"username"`
+	}{
+		UserID:   user.ID,
+		Username: user.Username,
+	}
+
+	c.JSON(http.StatusOK, responseData)
 }
 
 func (uh *UserHandler) LoginUser(c *gin.Context) {

@@ -19,6 +19,14 @@ type Chatroom struct {
 	Timestamp time.Time          `json:"timestamp" bson:"timestamp"`
 }
 
+type JoinedChatroom struct {
+	ID         primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	ChatroomID string             `json:"chatroom_id" bson:"chatroom_id"`
+	UserID     string             `json:"user_id" bson:"user_id"`
+	Name       string             `json:"name" bson:"name"`
+	Timestamp  time.Time          `json:"timestamp" bson:"timestamp"`
+}
+
 func StoreChatroom(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -84,6 +92,35 @@ func GetChatrooms(c *gin.Context) {
 	if err = cursor.All(context.TODO(), &chatrooms); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch chatrooms"})
 		return
+	}
+
+	filter = bson.D{{Key: "user_id", Value: userID}}
+	cursor, err = db.JoinedRoomsCollection.Find(ctx, filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch chatrooms"})
+		return
+	}
+
+	var joinedRooms []JoinedChatroom
+	if err = cursor.All(context.TODO(), &joinedRooms); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch chatrooms"})
+		return
+	}
+
+	for i := 0; i < len(joinedRooms); i++ {
+		var room Chatroom
+
+		primitiveID, err := primitive.ObjectIDFromHex(joinedRooms[i].ChatroomID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch chatrooms"})
+			return
+		}
+		room.ID = primitiveID
+		room.Name = joinedRooms[i].Name
+		room.Timestamp = joinedRooms[i].Timestamp
+		room.UserID = joinedRooms[i].UserID
+
+		chatrooms = append(chatrooms, room)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"chatrooms": chatrooms})

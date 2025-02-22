@@ -76,6 +76,24 @@ func (us *UserService) GetUserByEmail(email string) (*models.User, error) {
 	return user, nil
 }
 
+func (us *UserService) GetUserById(id string) (*models.User, error) {
+	user := &models.User{}
+	if err := us.DB.Where("id = ?", id).First(user).Error; err != nil {
+		log.Println("Error fetching user by id:", err)
+		return nil, err
+	}
+	return user, nil
+}
+
+func (us *UserService) GetUserByName(name string) (*models.User, error) {
+	user := &models.User{}
+	if err := us.DB.Where("username = ?", name).First(user).Error; err != nil {
+		log.Println("Error fetching user by name:", err)
+		return nil, err
+	}
+	return user, nil
+}
+
 func (us *UserService) Migrate() {
 	if err := us.DB.AutoMigrate(&models.User{}); err != nil {
 		log.Fatalf("Could not migrate database: %v", err)

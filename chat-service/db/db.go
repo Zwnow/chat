@@ -9,8 +9,10 @@ import (
 )
 
 var (
-	MessageCollection  *mongo.Collection
-	ChatroomCollection *mongo.Collection
+	MessageCollection     *mongo.Collection
+	ChatroomCollection    *mongo.Collection
+	ChatInviteCollection  *mongo.Collection
+	JoinedRoomsCollection *mongo.Collection
 )
 
 func Init() {
@@ -28,4 +30,6 @@ func Init() {
 	log.Println("Connected to MongoDB")
 	MessageCollection = client.Database("chat_db").Collection("messages")
 	ChatroomCollection = client.Database("chat_db").Collection("chatrooms")
+	ChatInviteCollection = client.Database("chat_db").Collection("chatinvites")
+	JoinedRoomsCollection = client.Database("chat_db").Collection("joinedrooms")
 }

@@ -22,7 +22,7 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	token := r.URL.Query().Get("token")
-	userID, err := db.GetUserFromToken(token)
+	userID, userName, err := db.GetUserFromToken(token)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -43,7 +43,7 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 
 	db.Connections[userID] = db.ChatroomConnection{Conn: conn, ChatroomID: chatroom}
 
-	go service.ListenForMessages(conn, userID, chatroom)
+	go service.ListenForMessages(conn, userID, userName, chatroom)
 
 	// Keep the connection open
 	select {}

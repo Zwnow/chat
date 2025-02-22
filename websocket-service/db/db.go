@@ -17,7 +17,7 @@ type ChatroomConnection struct {
 	ChatroomID string
 }
 
-var Connections = make(map[string]ChatroomConnection)
+var Connections = make(map[uint]ChatroomConnection)
 
 type Message struct {
 	UserID     string `json:"user_id"`
@@ -68,24 +68,25 @@ func SaveMessage(userID, chatroomID, message string) error {
 	return nil
 }
 
-func GetUserFromToken(token string) (string, error) {
+func GetUserFromToken(token string) (uint, string, error) {
 	resp, err := http.Get(fmt.Sprintf("http://user-service:8080/%s", token))
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 	defer resp.Body.Close()
-
-	var data struct {
-		UserID string `json:"user_id"`
+	var responseData struct {
+		UserID   uint   `json:"user_id"`
+		Username string `json:"username"`
 	}
-	err = json.NewDecoder(resp.Body).Decode(&data)
+
+	err = json.NewDecoder(resp.Body).Decode(&responseData)
 	if err != nil {
-		return "", err
-	} else if data.UserID == "" {
-		return "", errors.New("invalid request payload")
+		return 0, "", err
+	} else if responseData.Username == "" {
+		return 0, "", errors.New("invalid request payload")
 	}
 
-	return data.UserID, nil
+	return responseData.UserID, responseData.Username, nil
 }
 
 func UserHasChatroom(userID, chatroomID string) error {
