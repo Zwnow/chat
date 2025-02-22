@@ -17,6 +17,10 @@ onMounted(async () => {
 
 const currentConnection = ref<EventSource|null>(null);
 const connect = async (chatroom: string) => {
+    if (currentConnection.value !== null) {
+        currentConnection.value.close();
+        console.log("Closed existing connection.");
+    }
     currentConnection.value = new EventSource(`http://localhost/stream/${chatroom}?token=${userStore.token}`)
     currentConnection.value.onopen = function (event) {
         userStore.activeChat = chatroom;
@@ -32,7 +36,10 @@ const connect = async (chatroom: string) => {
     }
 
     currentConnection.value.onerror = function (event) {
-        console.log(event);
+        if (currentConnection.value!.readyState === EventSource.CLOSED) {
+            console.log("Connection closed.");
+            currentConnection.value = null;
+        }
     }
 }
 

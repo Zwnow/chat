@@ -28,7 +28,7 @@ type Client struct {
 }
 
 var (
-	chatroomClients = make(map[string]map[*Client]bool)
+	chatroomClients = make(map[string]map[string]*Client)
 	mu              sync.Mutex
 )
 
@@ -54,10 +54,23 @@ func MessageStreamHandler(c *gin.Context) {
 		return
 	}
 
+	mu.Lock()
+	if chatroomClients[room] == nil {
+		chatroomClients[room] = make(map[string]*Client)
+	}
+
+	if oldClient, exists := chatroomClients[room][user.Username]; exists {
+		close(oldClient.Channel)
+		delete(chatroomClients[room], user.Username)
+	}
+
 	client := &Client{
 		Username: user.Username,
 		Channel:  make(chan Message),
 	}
+
+	chatroomClients[room][user.Username] = client
+	mu.Unlock()
 
 	flusher, ok := c.Writer.(http.Flusher)
 	if !ok {
@@ -65,19 +78,12 @@ func MessageStreamHandler(c *gin.Context) {
 		return
 	}
 
-	mu.Lock()
-	if chatroomClients[room] == nil {
-		chatroomClients[room] = make(map[*Client]bool)
-	}
-	chatroomClients[room][client] = true
-	mu.Unlock()
-
 	fmt.Fprintf(c.Writer, "data: %s\n\n", `{"status":"connected"}`)
 	flusher.Flush()
 
 	defer func() {
 		mu.Lock()
-		delete(chatroomClients[room], client)
+		delete(chatroomClients[room], user.Username)
 		mu.Unlock()
 		close(client.Channel)
 		log.Println("Client disconnected from chatroom:", room)
@@ -85,7 +91,6 @@ func MessageStreamHandler(c *gin.Context) {
 
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
-
 	for {
 		select {
 		case <-c.Request.Context().Done():
@@ -149,7 +154,7 @@ func StoreMessage(c *gin.Context) {
 	}
 
 	mu.Lock()
-	for client := range chatroomClients[msg.ChatroomID] {
+	for _, client := range chatroomClients[msg.ChatroomID] {
 		client.Channel <- msg
 	}
 	mu.Unlock()
