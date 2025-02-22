@@ -8,13 +8,6 @@ services:
     depends_on:
       - mongo
 
-  websocket-service:
-    build: ./websocket-service
-    networks:
-      - chat-app-network
-    depends_on:
-      - chat-service
-
   user-service:
     build: ./user-service
     env_file:
@@ -55,7 +48,6 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:z
     depends_on:
       - chat-service
-      - websocket-service
       - user-service
     networks:
       - chat-app-network

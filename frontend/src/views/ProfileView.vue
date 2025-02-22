@@ -15,37 +15,39 @@ onMounted(async () => {
     loading.value = false;
 })
 
-const currentConnection = ref<WebSocket|null>(null);
+const currentConnection = ref<EventSource|null>(null);
 const connect = async (chatroom: string) => {
-    userStore.activeChat = chatroom;
-    if (currentConnection.value !== null) {
-        currentConnection.value.close();
-    }
-    currentConnection.value = new WebSocket(`ws://localhost/ws?chatroom=${chatroom}&token=${userStore.token}`)
-    currentConnection.value.onmessage = (event) => {
-        messages.value.push(event.data)
-    }
-    currentConnection.value.onopen = (event) => {
-        console.log(event);
-        console.log("Connected");
-    }
-    currentConnection.value.onerror = (event) => {
+    currentConnection.value = new EventSource(`http://localhost/stream/${chatroom}?token=${userStore.token}`)
+    currentConnection.value.onopen = function (event) {
+        userStore.activeChat = chatroom;
         console.log(event);
     }
-    currentConnection.value.onclose = (event) => {
-        if (currentConnection.value !== null) {
-            currentConnection.value = new WebSocket(`ws://localhost/ws?chatroom=${chatroom}&token=${userStore.token}`)
-            console.log("Reconnected")
+
+    currentConnection.value.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        if (data.content) {
+            messages.value.push({content: data.content, name: data.username, time: data.timestamp})
         }
+        console.log(data);
+    }
+
+    currentConnection.value.onerror = function (event) {
+        console.log(event);
     }
 }
 
 const handleMessage = async () => {
-    messages.value.push(message.value)
-    if (currentConnection.value !== null) {
-        currentConnection.value.send(message.value);
-    }
-    message.value = "";
+    const r = await fetch(`http://localhost/api/messages/${userStore.activeChat}`, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${userStore.token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            content: message.value,
+        }),
+    })
+    console.log(r);
 }
 const message = ref("");
 
@@ -58,7 +60,7 @@ const chatInviteForm = ref({
     chatroom: ""
 });
 
-const messages = ref<string[]>([]);
+const messages = ref<any>([]);
 </script>
 
 <template>
@@ -99,7 +101,7 @@ const messages = ref<string[]>([]);
                     type="submit">Send</button>
             </form>
             <div class="flex flex-col gap-2 h-[400px] max-h-[400px]">
-                <p v-for="message in messages">{{ message }}</p>
+                <p v-for="message in messages">{{message.user_id}}: {{ message.content }}</p>
 
             </div>
             <form class="flex flex-col gap-2"
