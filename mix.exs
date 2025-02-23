@@ -23,7 +23,9 @@ defmodule Chat.MixProject do
   defp deps do
     [
       {:ecto_sql, "~> 3.0"},
-      {:postgrex, ">= 0.0.0"}
+      {:postgrex, ">= 0.0.0"},
+      {:bandit, "~> 1.6.7"},
+      {:plug, "~> 1.16.1"},
     ]
   end
 end
