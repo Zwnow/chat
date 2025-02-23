@@ -7,12 +7,9 @@ defmodule Chat.User do
     field :password, :string
     field :verified, :boolean
     field :verification_code, :string
-    field :created_at, :naive_datetime
-  end
+    timestamps()
 
-  def changeset(user, params \\ []) do
-    user
-    |>Ecto.Changeset.cast(params, [:user_name, :email, :password, :verification_code])
-    |>Ecto.Changeset.validate_required([:user_name, :email, :password, :verification_code])
+    has_many :messages, Chat.Message
+    has_many :chatrooms, Chat.Chatroom
   end
 end
