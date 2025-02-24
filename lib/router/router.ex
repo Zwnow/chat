@@ -2,7 +2,7 @@ defmodule Chat.Router do
   use Plug.Router
 
   plug Plug.Logger
-  plug Plug.Parsers, parsers: [:json], json_decoder: JasonV
+  plug Plug.Parsers, parsers: [:json], json_decoder: Jason
   plug :match
   plug :dispatch
 
@@ -10,9 +10,16 @@ defmodule Chat.Router do
     send_resp(conn, 200, "Hello, world!")
   end
 
-
   post "/register" do
-    send_resp(conn, 200, "")
+    case Chat.User.register_user(conn.body_params) do
+      {:ok, _user} -> 
+        send_resp(conn, 201, "User registered")
+      {:error, changeset} ->
+        errors = Ecto.Changeset.traverse_errors(changeset, fn {msg, _} -> msg end)
+        send_resp(conn, 400, Jason.encode!(%{errors: errors}))
+      _ ->
+        send_resp(conn, 400, "Invalid data")
+    end
   end
 
   post "/login" do

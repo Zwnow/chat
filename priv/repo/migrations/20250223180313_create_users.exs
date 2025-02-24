@@ -5,7 +5,7 @@ defmodule Chat.Repo.Migrations.CreateUsers do
     create table(:users) do
       add :user_name, :string, null: false
       add :email, :string, null: false
-      add :password, :string, null: false
+      add :password_hash, :string, null: false
       add :verified, :boolean, default: false
       add :verification_code, :string, null: false
       timestamps()

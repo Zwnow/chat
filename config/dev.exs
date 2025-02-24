@@ -1,11 +1,9 @@
 import Config
 
 config :chat, Chat.Repo,
-  database: "chat_repo",
+  database: "chat_dev",
   username: "postgres",
   password: "postgres",
   hostname: "localhost"
 
 config :chat, ecto_repos: [Chat.Repo]
-
-import_config("#{config_env()}.exs")
