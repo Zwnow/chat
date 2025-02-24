@@ -18,12 +18,17 @@ defmodule Chat.Router do
         errors = Ecto.Changeset.traverse_errors(changeset, fn {msg, _} -> msg end)
         send_resp(conn, 400, Jason.encode!(%{errors: errors}))
       _ ->
-        send_resp(conn, 400, "Invalid data")
+        send_resp(conn, 400, "Invalid request payload")
     end
   end
 
   post "/login" do
-    send_resp(conn, 200, "")
+    case Chat.User.login_user(conn.body_params) do
+      {:ok, token} ->
+        send_resp(conn, 200, Jason.encode!(%{token: token}))
+      _ ->
+        send_resp(conn, 400, "Invalid request payload")
+    end
   end
 
   match _ do

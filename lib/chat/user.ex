@@ -1,11 +1,10 @@
 defmodule Chat.User do
   use Ecto.Schema
-  import Ecto.Changeset
+  import Ecto.{Query, Changeset}
 
   schema "users" do
     field :user_name, :string
     field :email, :string
-    field :password, :string
     field :password_hash, :string
     field :verified, :boolean
     field :verification_code, :string
@@ -18,10 +17,10 @@ defmodule Chat.User do
   @doc false
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:user_name, :email, :password])
-    |> validate_required([:user_name, :email, :password])
+    |> cast(attrs, [:user_name, :email])
+    |> validate_required([:user_name, :email])
     |> unique_constraint([:user_name, :email])
-    |> hash_password()
+    |> hash_password(attrs)
     |> gen_verification_code()
   end
 
@@ -31,12 +30,30 @@ defmodule Chat.User do
     |> Chat.Repo.insert()
   end
 
-  defp hash_password(changeset) do
-    if password = get_change(changeset, :password) do
+  def login_user(attrs) do
+    email = Map.get(attrs, "email")
+    password = Map.get(attrs, "password")
+
+    if email && password do
+      user = Chat.User |> Ecto.Query.where(email: ^email) |> Chat.Repo.one
+      if user && Argon2.verify_pass(password, user.password_hash) do
+        token = ""
+        {:ok, token}
+      else
+        {:error, "invalid credentials"}
+      end
+    else
+      {:error, "invalid request payload"}
+    end
+  end
+
+  defp hash_password(changeset, attrs) do
+    password = Map.get(attrs, "password")
+    if password do
       put_change(changeset, :password_hash, Argon2.hash_pwd_salt(password))
       |> delete_change(:password)
     else
-      changeset
+      add_error(changeset, :password, "can not be blank")
     end
   end
 

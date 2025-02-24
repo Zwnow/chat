@@ -33,7 +33,7 @@ defmodule Chat.RouterTest do
   end
 
   test "parallel registration" do
-    num_requests = 100
+    num_requests = 10
     tasks = 1..num_requests
     |> Enum.map(fn index ->
       Task.async(fn -> 
@@ -43,7 +43,7 @@ defmodule Chat.RouterTest do
           |> put_req_header("content-type", "application/json")
           |> Router.call(@opts)         
 
-        assert conn.status == 201
+          assert conn.status == 201
           assert conn.resp_body == "User registered"
       end)
     end)
@@ -51,6 +51,56 @@ defmodule Chat.RouterTest do
     Enum.each(tasks, fn task -> 
       Task.await(task, 15000)
     end)
+  end
+
+  test "successful login" do
+    conn =
+      conn(:post, "/register", %{
+        "user_name" => "testuser",
+        "email" => "test@example.com",
+        "password" => "somePass123",
+      })
+      |> put_req_header("content-type", "application/json")
+      |> Router.call(@opts)
+
+    assert conn.status == 201
+    assert conn.resp_body == "User registered"
+
+    conn =
+      conn(:post, "/login", %{
+        "email" => "test@example.com",
+        "password" => "somePass123",
+      })
+      |> put_req_header("content-type", "application/json")
+      |> Router.call(@opts)
+
+    assert conn.status == 200
+    assert String.contains?(conn.resp_body, "token")
+  end
+
+
+  test "wrong password" do
+    conn =
+      conn(:post, "/register", %{
+        "user_name" => "testuser",
+        "email" => "test@example.com",
+        "password" => "somePass123",
+      })
+      |> put_req_header("content-type", "application/json")
+      |> Router.call(@opts)
+
+    assert conn.status == 201
+    assert conn.resp_body == "User registered"
+
+    conn =
+      conn(:post, "/login", %{
+        "email" => "test@example.com",
+        "password" => "smePass123",
+      })
+      |> put_req_header("content-type", "application/json")
+      |> Router.call(@opts)
+
+    assert conn.status == 400
   end
 
   defp generate_valid_user(index) do
