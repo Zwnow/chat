@@ -37,8 +37,10 @@ defmodule Chat.User do
     if email && password do
       user = Chat.User |> Ecto.Query.where(email: ^email) |> Chat.Repo.one
       if user && Argon2.verify_pass(password, user.password_hash) do
-        token = ""
-        {:ok, token}
+        case Chat.Token.generate_and_sign(%{"id" => user.id}, Chat.Token.env_signer()) do
+          {:ok, token, _claims} -> {:ok, token}
+          {:error, reason} -> {:error, reason}
+        end
       else
         {:error, "invalid credentials"}
       end

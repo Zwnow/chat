@@ -32,6 +32,8 @@ defmodule Chat.MixProject do
       {:plug, "~> 1.16.1"},
       {:jason, "~> 1.4"},
       {:argon2_elixir, "~> 3.0"},
+      {:joken, "~> 2.6.2"},
+      {:dotenv_parser, "~> 2.0"},
     ]
   end
 end

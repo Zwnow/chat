@@ -33,24 +33,22 @@ defmodule Chat.RouterTest do
   end
 
   test "parallel registration" do
-    num_requests = 10
-    tasks = 1..num_requests
-    |> Enum.map(fn index ->
-      Task.async(fn -> 
-        user = generate_valid_user(index)
-        conn =
-          conn(:post, "/register", user)
-          |> put_req_header("content-type", "application/json")
-          |> Router.call(@opts)         
+    num_requests = 100
 
-          assert conn.status == 201
-          assert conn.resp_body == "User registered"
-      end)
-    end)
-    
-    Enum.each(tasks, fn task -> 
-      Task.await(task, 15000)
-    end)
+    user_data = 1..num_requests |> Enum.map(&generate_valid_user(&1))
+
+    results = 
+      user_data
+      |> Task.async_stream(fn user ->
+      conn = conn(:post, "/register", user)
+        |> put_req_header("content-type", "application/json")
+        |> Router.call(@opts)
+
+      assert conn.status == 201
+      assert conn.resp_body == "User registered"
+    end, max_concurrency: 10)
+
+    Enum.to_list(results)
   end
 
   test "successful login" do
