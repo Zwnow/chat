@@ -14,4 +14,3 @@ config :chat, ecto_repos: [Chat.Repo]
 config :joken, default_signer: System.fetch_env("JWT_SECRET")
 
 config :logger, level: :error
-

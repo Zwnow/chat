@@ -1,6 +1,8 @@
 defmodule Chat.User do
   use Ecto.Schema
-  import Ecto.{Query, Changeset}
+  import Chat.UserCollector
+  import Ecto.Query
+  import Ecto.Changeset
 
   schema "users" do
     field :user_name, :string
@@ -19,15 +21,21 @@ defmodule Chat.User do
     user
     |> cast(attrs, [:user_name, :email])
     |> validate_required([:user_name, :email])
-    |> unique_constraint([:user_name, :email])
+    |> unique_constraint(:email)
+    |> unique_constraint(:user_name)
     |> hash_password(attrs)
     |> gen_verification_code()
   end
 
   def register_user(attrs) do
-    %Chat.User{}
-    |> Chat.User.changeset(attrs)
-    |> Chat.Repo.insert()
+    changeset = Chat.User.changeset(%Chat.User{}, attrs)
+    if changeset.valid? do
+      user = Ecto.Changeset.apply_changes(changeset)
+      Chat.UserCollector.add_user(user)
+      :ok
+    else
+      {:error, "Invalid request payload"}
+    end
   end
 
   def login_user(attrs) do

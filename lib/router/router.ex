@@ -12,13 +12,10 @@ defmodule Chat.Router do
 
   post "/register" do
     case Chat.User.register_user(conn.body_params) do
-      {:ok, _user} -> 
+      :ok -> 
         send_resp(conn, 201, "User registered")
-      {:error, changeset} ->
-        errors = Ecto.Changeset.traverse_errors(changeset, fn {msg, _} -> msg end)
-        send_resp(conn, 400, Jason.encode!(%{errors: errors}))
-      _ ->
-        send_resp(conn, 400, "Invalid request payload")
+      {:error, message} ->
+        send_resp(conn, 400, Jason.encode!(%{errors: message}))
     end
   end
 
