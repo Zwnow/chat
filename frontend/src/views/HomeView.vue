@@ -4,7 +4,7 @@ import { useUserStore } from '@/stores/userStore';
 import router from '@/router';
 const userStore = useUserStore();
 const handleSubmit = async () => {
-    const r = await fetch("http://localhost/login", {
+    const r = await fetch("http://localhost:4000/login", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

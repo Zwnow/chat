@@ -3,7 +3,7 @@ import router from '@/router';
 import { ref } from 'vue';
 
 const handleSubmit = async () => {
-    const r = await fetch("http://localhost:80/register", {
+    const r = await fetch("http://localhost:4000/register", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -20,7 +20,7 @@ const handleSubmit = async () => {
 }
 
 const form = ref({
-    username: "",
+    user_name: "",
     email: "",
     password: "",
 })
@@ -34,7 +34,7 @@ const form = ref({
             <fieldset class="flex flex-col">
                 <label for="username">Username</label>
                 <input class="outline p-2 rounded-md"
-                    type="text" id="username" v-model="form.username" required>
+                    type="text" id="username" v-model="form.user_name" required>
             </fieldset>
             <fieldset class="flex flex-col">
                 <label for="email">Email</label>
