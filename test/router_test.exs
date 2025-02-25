@@ -85,6 +85,8 @@ defmodule Chat.RouterTest do
   end
 
   test "parallel registration" do
+    assert Chat.Repo.all(Chat.User) |> Enum.count() == 0
+
     num_requests = 500
 
     user_data = 1..num_requests |> Enum.map(&generate_valid_user(&1))
@@ -102,8 +104,7 @@ defmodule Chat.RouterTest do
 
     Enum.to_list(results)
 
-    count = Chat.Repo.all(Chat.User) |> Enum.count()
-    assert count == num_requests
+    assert Chat.Repo.all(Chat.User) |> Enum.count() == num_requests 
   end
 
   defp generate_valid_user(index) do

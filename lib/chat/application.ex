@@ -9,7 +9,7 @@ defmodule Chat.Application do
     children = [
       Chat.Repo,
       {Bandit, plug: Chat.Router, port: 4000},
-      {Chat.UserCollector, []}
+      #{Chat.UserCollector, []}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

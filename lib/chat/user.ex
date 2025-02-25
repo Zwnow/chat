@@ -1,6 +1,5 @@
 defmodule Chat.User do
   use Ecto.Schema
-  import Chat.UserCollector
   import Ecto.Query
   import Ecto.Changeset
 
@@ -31,7 +30,7 @@ defmodule Chat.User do
     changeset = Chat.User.changeset(%Chat.User{}, attrs)
     if changeset.valid? do
       user = Ecto.Changeset.apply_changes(changeset)
-      Chat.UserCollector.add_user(user)
+      Chat.Repo.insert(user)
       :ok
     else
       {:error, "Invalid request payload"}
