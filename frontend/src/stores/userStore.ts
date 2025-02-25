@@ -37,7 +37,7 @@ export const useUserStore = defineStore('user', () => {
     const chatinvites = ref<Chatinvite[]>([]);
 
     const authenticate = async () => {
-        const r = await fetch("http://localhost/validate-token", {
+        const r = await fetch("http://localhost:4000/validate-token", {
             headers: {
                 "Authorization": `Bearer ${token.value}`
             }
@@ -48,17 +48,18 @@ export const useUserStore = defineStore('user', () => {
     }
 
     const getChatrooms = async () => {
-        const r = await fetch("http://localhost/api/chatroom", {
+        const r = await fetch("http://localhost:4000/chatroom", {
             headers: {
                 "Authorization": `Bearer ${token.value}`
             }
         });
         const data = await r.json();
-        chatrooms.value = data.chatrooms;
+
+        chatrooms.value = data;
     }
 
     const createChatroom = async (form: ChatroomForm) => {
-        const r = await fetch("http://localhost/api/chatroom", {
+        const r = await fetch("http://localhost:4000/chatroom", {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token.value}`,

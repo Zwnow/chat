@@ -28,7 +28,10 @@ defmodule Chat.ConnectionHandler do
   @impl true
   def handle_call({:add_conn, chatroom_id, conn, user_id}, _from, state) do
     connections = Map.get(state, chatroom_id, MapSet.new())
-    new_connections = MapSet.put(connections, %{conn: conn, user_id: user_id})
+    filtered_connections =
+      Enum.reject(connections, fn %{user_id: uid} -> uid == user_id end)
+      |> MapSet.new()
+    new_connections = MapSet.put(filtered_connections, %{conn: conn, user_id: user_id})
     {:reply, :ok, Map.put(state, chatroom_id, new_connections)}
   end
 

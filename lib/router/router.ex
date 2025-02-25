@@ -3,6 +3,7 @@ defmodule Chat.Router do
 
   plug Plug.Logger
   plug Plug.Parsers, parsers: [:json], json_decoder: Jason
+  plug CORSPlug
   plug :match
   plug :dispatch
 
@@ -28,7 +29,7 @@ defmodule Chat.Router do
     end
   end
 
-  post "/validate-token" do
+  get "/validate-token" do
     case get_req_header(conn, "authorization") do
       ["Bearer " <> token] ->
         case Chat.Token.verify_token(token) do
@@ -69,13 +70,13 @@ defmodule Chat.Router do
       {:ok, claims} -> 
         {:ok, result} = Chat.Chatroom.get_chatrooms(claims["id"])
         json_response = Jason.encode!(result)
-        send_resp(conn, 201, json_response)
+        send_resp(conn, 200, json_response)
       :error -> send_resp(conn, 400, "Failed to authenticate")
     end
   end
 
-  get "/chatroom/:id" do
-    case validate_token(conn) do
+  get "/chatroom/:id/:token" do
+    case validate_token(token) do
       {:ok, claims} -> conn =
         conn
         |> put_resp_content_type("text/event-stream")
@@ -96,10 +97,21 @@ defmodule Chat.Router do
 
     case Plug.Conn.chunk(conn, ":\n\n") do
       {:ok, _} -> keep_alive(conn, chatroom_id)
-      {:error, _} -> Chat.ConnectionHandler.remove_connection(chatroom_id, conn)
+      {:error, _} -> 
+        Chat.ConnectionHandler.remove_connection(chatroom_id, conn)
+        conn
     end
   end
 
+  defp validate_token(token) when is_binary(token) do
+    case Chat.Token.verify_token(token) do
+      {:ok, claims} ->
+        {:ok, claims}
+      {:error, _reason} ->
+        :error
+    end
+  end
+  
   defp validate_token(conn) do
     case get_req_header(conn, "authorization") do
       ["Bearer " <> token] ->
