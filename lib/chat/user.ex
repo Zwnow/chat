@@ -59,8 +59,13 @@ defmodule Chat.User do
   defp hash_password(changeset, attrs) do
     password = Map.get(attrs, "password")
     if password do
-      put_change(changeset, :password_hash, Argon2.hash_pwd_salt(password))
-      |> delete_change(:password)
+      if Mix.env() == :test do
+        put_change(changeset, :password_hash, Argon2.hash_pwd_salt(password, t_cost: 1))
+        |> delete_change(:password)
+      else
+        put_change(changeset, :password_hash, Argon2.hash_pwd_salt(password))
+        |> delete_change(:password)
+      end
     else
       add_error(changeset, :password, "can not be blank")
     end

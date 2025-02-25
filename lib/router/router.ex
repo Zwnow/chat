@@ -51,7 +51,44 @@ defmodule Chat.Router do
     end
   end
 
+
+  # App
+  post "/chatroom" do
+    case validate_token(conn) do
+      {:ok, claims} -> 
+        case Chat.Chatroom.create_chatroom(conn.body_params, claims["id"]) do
+          :ok -> send_resp(conn, 201, "Chatroom created")
+          {:error, reason} -> send_resp(conn, 400, reason)
+        end
+        :error -> send_resp(conn, 400, "Invalid request payload")
+    end
+  end
+
+  get "/chatroom" do
+    case validate_token(conn) do
+      {:ok, claims} -> 
+        {:ok, result} = Chat.Chatroom.get_chatrooms(claims["id"])
+        json_response = Jason.encode!(result)
+        send_resp(conn, 201, json_response)
+      :error -> send_resp(conn, 400, "Invalid request payload")
+    end
+  end
+
   match _ do
     send_resp(conn, 404, "Not found!")
+  end
+
+  defp validate_token(conn) do
+    case get_req_header(conn, "authorization") do
+      ["Bearer " <> token] ->
+        case Chat.Token.verify_token(token) do
+          {:ok, claims} ->
+            {:ok, claims}
+          {:error, _reason} ->
+            :error
+        end
+      _ ->
+        :error
+    end
   end
 end
