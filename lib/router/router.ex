@@ -70,12 +70,34 @@ defmodule Chat.Router do
         {:ok, result} = Chat.Chatroom.get_chatrooms(claims["id"])
         json_response = Jason.encode!(result)
         send_resp(conn, 201, json_response)
-      :error -> send_resp(conn, 400, "Invalid request payload")
+      :error -> send_resp(conn, 400, "Failed to authenticate")
+    end
+  end
+
+  get "/chatroom/:id" do
+    case validate_token(conn) do
+      {:ok, claims} -> conn =
+        conn
+        |> put_resp_content_type("text/event-stream")
+        |> send_chunked(200)
+
+        Chat.ConnectionHandler.add_connection(id, conn, claims["id"])
+        keep_alive(conn, id)
+      :error -> send_resp(conn, 400, "Failed to authenticate")
     end
   end
 
   match _ do
     send_resp(conn, 404, "Not found!")
+  end
+
+  defp keep_alive(conn, chatroom_id) do
+    Process.sleep(15_000)
+
+    case Plug.Conn.chunk(conn, ":\n\n") do
+      {:ok, _} -> keep_alive(conn, chatroom_id)
+      {:error, _} -> Chat.ConnectionHandler.remove_connection(chatroom_id, conn)
+    end
   end
 
   defp validate_token(conn) do
