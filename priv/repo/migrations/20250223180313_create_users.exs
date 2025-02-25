@@ -22,7 +22,7 @@ defmodule Chat.Repo.Migrations.CreateUsers do
 
     create table(:messages) do
       add :user_id, references(:users)
-      add :chatroom, references(:chatrooms)
+      add :chatroom_id, references(:chatrooms)
       add :content, :string, null: false
       timestamps()
     end

@@ -26,7 +26,7 @@ defmodule Chat.Chatroom do
     |> case do
       %Ecto.Changeset{valid?: true} = changeset ->
         Chat.Repo.insert(changeset)
-        :ok
+        {:ok, changeset}
 
       %Ecto.Changeset{valid?: false} = _changeset ->
         {:error, "Invalid request payload"}

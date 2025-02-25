@@ -154,6 +154,64 @@ defmodule Chat.RouterTest do
     assert String.contains?(conn.resp_body, "Token valid")
   end
 
+  test "5000 messages" do
+    conn =
+      conn(:post, "/register", %{
+        "user_name" => "login3ser",
+        "email" => "test@exampl32.com",
+        "password" => "somePass123",
+      })
+      |> put_req_header("content-type", "application/json")
+      |> Router.call(@opts)
+
+    assert conn.status == 201
+    assert conn.resp_body == "User registered"
+
+    Process.sleep(1000)
+
+    conn =
+      conn(:post, "/login", %{
+        "email" => "test@exampl32.com",
+        "password" => "somePass123",
+      })
+      |> put_req_header("content-type", "application/json")
+      |> Router.call(@opts)
+
+    assert conn.status == 200
+    assert String.contains?(conn.resp_body, "token")
+
+    body = case Jason.decode(conn.resp_body) do
+      {:ok, data} -> data
+      {:error, _} -> assert false
+    end
+
+    {:ok, token} = Map.fetch(body, "token")
+
+    conn =
+      conn(:post, "/chatroom", "{\"name\":\"asdf\"}")
+      |> put_req_header("content-type", "application/json")
+      |> put_req_header("authorization", "Bearer #{token}")
+      |> Router.call(@opts)
+
+    assert conn.status == 201
+
+    id = conn.resp_body
+    num_requests = 1..20000
+
+    results = 
+      num_requests
+      |> Task.async_stream(fn user ->
+        conn = conn(:post, "/message/#{id}", "{\"content\":\"Test message\"}")
+          |> put_req_header("content-type", "application/json")
+          |> put_req_header("authorization", "Bearer #{token}")
+          |> Router.call(@opts)
+      end, max_concurrency: 10)
+
+    Enum.to_list(results)
+
+    assert Chat.Repo.all(Chat.Message) |> Enum.count() == 20000
+  end
+
   test "invalid token" do
     conn =
       conn(:post, "/register", %{
@@ -196,7 +254,7 @@ defmodule Chat.RouterTest do
       |> put_req_header("authorization", "Bearer 1232141532")
       |> Router.call(@opts)
 
-    assert conn.status == 200
+    assert conn.status == 404
     assert String.contains?(conn.resp_body, "Token valid")
   end
 

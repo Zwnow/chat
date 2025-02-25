@@ -1,5 +1,6 @@
 defmodule Chat.Router do
   use Plug.Router
+  import Ecto.Query
 
   plug Plug.Logger
   plug Plug.Parsers, parsers: [:json], json_decoder: Jason
@@ -58,7 +59,9 @@ defmodule Chat.Router do
     case validate_token(conn) do
       {:ok, claims} -> 
         case Chat.Chatroom.create_chatroom(conn.body_params, claims["id"]) do
-          :ok -> send_resp(conn, 201, "Chatroom created")
+          {:ok, _} -> 
+            room = Chat.Chatroom |> Chat.Repo.one()
+            send_resp(conn, 201, "#{room.id}")
           {:error, reason} -> send_resp(conn, 400, reason)
         end
         :error -> send_resp(conn, 400, "Invalid request payload")
@@ -77,13 +80,36 @@ defmodule Chat.Router do
 
   get "/chatroom/:id/:token" do
     case validate_token(token) do
-      {:ok, claims} -> conn =
-        conn
-        |> put_resp_content_type("text/event-stream")
-        |> send_chunked(200)
+      {:ok, claims} -> 
+        conn =
+          conn
+          |> Plug.Conn.put_resp_content_type("text/event-stream")
+          |> Plug.Conn.send_chunked(200)
 
-        Chat.ConnectionHandler.add_connection(id, conn, claims["id"])
-        keep_alive(conn, id)
+        Chat.ConnectionHandler.add_connection(id, conn, claims["id"], self())
+        handle_message(conn, id)
+      :error -> 
+        send_resp(conn, 400, "Failed to authenticate")
+    end
+  end
+
+  post "/message/:chatroom_id" do
+    case validate_token(conn) do
+      {:ok, claims} -> 
+        id = claims["id"]
+        user = Chat.User |> Ecto.Query.where(id: ^id) |> Chat.Repo.one()
+
+        if user do
+          updated_conn = %Plug.Conn{conn | body_params: Map.merge(conn.body_params, %{"user_id" => user.id, "user_name" => user.user_name, "chatroom" => chatroom_id})}
+          case Chat.Message.store_message(updated_conn.body_params) do
+            :ok -> 
+              send_resp(updated_conn, 200, "sent")
+            {:error, _} -> 
+              send_resp(updated_conn, 400, "failed to send")
+          end
+        else
+          send_resp(conn, 404, "User not found")
+        end
       :error -> send_resp(conn, 400, "Failed to authenticate")
     end
   end
@@ -124,5 +150,20 @@ defmodule Chat.Router do
       _ ->
         :error
     end
+  end
+
+  defp handle_message(conn, id) do
+    receive do
+      {:send_sse_message, conn, message, user_name} ->
+        Plug.Conn.chunk(conn, "data: {\"name\":\"#{user_name}\", \"message\":\"#{message}\"}\n\n")
+    after
+      15_000 ->  
+        case Plug.Conn.chunk(conn, ":\n\n") do
+            {:error,_} -> Chat.ConnectionHandler.remove_connection(id, conn)
+            :ok
+            _ -> :ok
+        end
+    end
+    handle_message(conn, id)
   end
 end

@@ -22,7 +22,8 @@ const connect = async (chatroom: string) => {
         currentConnection.value.close();
         console.log("Closed existing connection.");
     }
-    currentConnection.value = new EventSource(`http://localhost:4000/chatroom/${chatroom}/${userStore.token}`)
+    //currentConnection.value = new EventSource(`http://localhost:4000/chatroom/${chatroom}/${userStore.token}`)
+    currentConnection.value = new EventSource(`http://localhost:4000/chatroom/1/${userStore.token}`)
     currentConnection.value.onopen = function (event) {
         userStore.activeChat = chatroom;
         console.log(event);
@@ -45,7 +46,7 @@ const connect = async (chatroom: string) => {
 }
 
 const handleMessage = async () => {
-    const r = await fetch(`http://localhost:4000/messages/${userStore.activeChat}`, {
+    const r = await fetch(`http://localhost:4000/message/${userStore.activeChat}`, {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${userStore.token}`,
