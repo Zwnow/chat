@@ -6,7 +6,7 @@ defmodule Chat.ConnectionHandler do
 
   # Server
   def start_link(_opts) do
-    GenServer.start_link(__MODULE__, @initial_state, name: __MODULE__)
+    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
   def add_connection(chatroom_id, conn, user_id, pid) do
