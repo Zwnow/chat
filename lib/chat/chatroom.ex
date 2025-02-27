@@ -25,7 +25,9 @@ defmodule Chat.Chatroom do
     |> validate_required([:user_id])
     |> case do
       %Ecto.Changeset{valid?: true} = changeset ->
-        Chat.Repo.insert(changeset)
+        {:ok, changeset} = Chat.Repo.insert(changeset)
+        %{id: id} = changeset
+        Chat.ChatroomMember.create(id, user_id)
         {:ok, changeset}
 
       %Ecto.Changeset{valid?: false} = _changeset ->

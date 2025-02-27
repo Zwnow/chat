@@ -20,6 +20,12 @@ defmodule Chat.Repo.Migrations.CreateUsers do
       timestamps()
     end
 
+    create table(:chatroom_members) do
+      add :chatroom_id, :integer, null: false
+      add :user_id, :integer, null: false
+      timestamps()
+    end
+
     create table(:messages) do
       add :user_id, references(:users)
       add :chatroom_id, references(:chatrooms)

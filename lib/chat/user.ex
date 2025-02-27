@@ -13,6 +13,7 @@ defmodule Chat.User do
 
     has_many :messages, Chat.Message
     has_many :chatrooms, Chat.Chatroom
+    has_many :chatroom_members, Chat.ChatroomMember
   end
 
   @doc false

@@ -112,12 +112,40 @@ defmodule Chat.Router do
     end
   end
 
-  post "/invitation/accept" do
+  get "/chatinvite" do
+    case validate_token(conn) do
+      {:ok, claims} ->
+        %{"id" => id} = claims
+        invites = Chat.ChatInvitation.get(id)
+        send_resp(conn, 200, Jason.encode!(%{invites: invites}))
+      :error -> send_resp(conn, 400, "Failed to authenticate")
+    end
+  end
 
+  post "/invitation/accept" do
+    case validate_token(conn) do
+      {:ok, claims} ->
+        %{"id" => id} = claims
+        updated_conn = %Plug.Conn{conn | body_params: Map.merge(conn.body_params, %{"user_id" => id})}
+        case Chat.ChatInvitation.accept_invitation(updated_conn.body_params) do
+          :ok -> send_resp(updated_conn, 200, "Invitation accepted")
+          {:error, msg} -> send_resp(updated_conn, 400, msg)
+        end
+      :error -> send_resp(conn, 400, "Failed to authenticate")
+    end
   end
 
   post "/invitation/decline" do
-
+    case validate_token(conn) do
+      {:ok, claims} ->
+        %{"id" => id} = claims
+        updated_conn = %Plug.Conn{conn | body_params: Map.merge(conn.body_params, %{"user_id" => id})}
+        case Chat.ChatInvitation.decline_invitation(updated_conn.body_params) do
+          :ok -> send_resp(updated_conn, 200, "Invitation accepted")
+          {:error, msg} -> send_resp(updated_conn, 400, msg)
+        end
+      :error -> send_resp(conn, 400, "Failed to authenticate")
+    end
   end
 
   post "/message/:chatroom_id" do
@@ -172,11 +200,9 @@ defmodule Chat.Router do
   end
 
   defp chatroom_member?(chatroom_id, id) do
-    query = from room in "chatrooms",
-            where: room.user_id == ^id and room.id == ^chatroom_id
-
-    room = Chat.Repo.get(Chat.Chatroom, query)
-    room == nil
+    chatroom_id = String.to_integer(chatroom_id)
+    room = Chat.ChatroomMember |> Ecto.Query.where([user_id: ^id, chatroom_id: ^chatroom_id]) |> Chat.Repo.one()
+    room != nil
   end
 
   defp stream_messages(conn, chatroom_id) do

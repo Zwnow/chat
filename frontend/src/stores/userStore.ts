@@ -73,7 +73,7 @@ export const useUserStore = defineStore('user', () => {
     }
 
     const sendChatInvitation = async (form: ChatInviteForm) => {
-        const r = await fetch("http://localhost/api/chatinvite", {
+        const r = await fetch("http://localhost:4000/chatinvite", {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token.value}`,
@@ -81,13 +81,13 @@ export const useUserStore = defineStore('user', () => {
             },
             body: JSON.stringify({
                 chatroom: activeChat.value,
-                to_user_name: form.to_user_name,
+                to_user: form.to_user_name,
             }),
         });
     }
 
     const getChatInvites = async () => {
-        const r = await fetch("http://localhost/api/chatinvite", {
+        const r = await fetch("http://localhost:4000/chatinvite", {
             method: "GET",
             headers: {
                 "Authorization": `Bearer ${token.value}`,
