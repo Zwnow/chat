@@ -25,12 +25,23 @@ defmodule Chat.Message do
     content = Ecto.Changeset.get_field(message, :content)
     case Chat.Repo.insert(message) do
       {:ok, _} -> 
-        chatroom = Ecto.Changeset.get_field(message, :chatroom)
-        Chat.ConnectionHandler.broadcast(chatroom.id, content, attrs["user_name"])
+        %{id: chatroom_id} = Ecto.Changeset.get_field(message, :chatroom)
+        user_id = Ecto.Changeset.get_field(message, :user_id)
+        %{user_name: name} = Chat.User |> Chat.Repo.get(user_id)
+
+        broadcast(chatroom_id, "{\"user\": \"#{name}\", \"message\": \"#{content}\"}\n\n")
         :ok
       {:error, err} -> 
         IO.inspect(err)
         {:error, "failed to insert"}
     end
+  end
+
+  defp broadcast(chatroom_id, message) do
+    Registry.dispatch(Chat.Registry, "#{chatroom_id}", fn entries ->
+      for {pid, _} <- entries do
+        send(pid, {:message, message})
+      end
+    end)
   end
 end

@@ -1,45 +1,46 @@
 <script setup lang="ts">
 import { useUserStore } from "@/stores/userStore";
-import { onMounted, ref } from "vue";
+import { watch, nextTick, onMounted, ref } from "vue";
 
 const userStore = useUserStore();
 const loading = ref(true);
 const hasError = ref(false);
+const connectionStatus = ref("Not connected");
 onMounted(async () => {
     loading.value = true;
     try {
         await userStore.getChatrooms();
-        console.log(userStore.chatrooms)
+        let conn = sessionStorage.getItem("chatroom")
+        if (conn !== null) {
+            await connect(conn);
+        }
     } catch(e) {
         hasError.value = true;
     }
     loading.value = false;
+
 })
 
 const currentConnection = ref<EventSource|null>(null);
 const connect = async (chatroom: string) => {
-    if (currentConnection.value !== null) {
-        currentConnection.value.close();
-        console.log("Closed existing connection.");
-    }
-    //currentConnection.value = new EventSource(`http://localhost:4000/chatroom/${chatroom}/${userStore.token}`)
-    currentConnection.value = new EventSource(`http://localhost:4000/chatroom/1/${userStore.token}`)
+    currentConnection.value = new EventSource(`http://localhost:4000/chatroom/${chatroom}/${userStore.token}`)
+    sessionStorage.setItem("chatroom", chatroom)
+
     currentConnection.value.onopen = function (event) {
+        connectionStatus.value = "Connected"
         userStore.activeChat = chatroom;
-        console.log(event);
     }
 
     currentConnection.value.onmessage = function (event) {
         const data = JSON.parse(event.data);
-        if (data.content) {
-            messages.value.push({content: data.content, name: data.username, time: data.timestamp})
+        if (data.user) {
+            messages.value.push({message: data.message, user: data.user, time: new Date()})
         }
-        console.log(data);
     }
 
     currentConnection.value.onerror = function (event) {
         if (currentConnection.value!.readyState === EventSource.CLOSED) {
-            console.log("Connection closed.");
+            connectionStatus.value = "Disconnected"
             currentConnection.value = null;
         }
     }
@@ -58,6 +59,7 @@ const handleMessage = async () => {
     })
     console.log(r);
 }
+
 const message = ref("");
 
 const form = ref({
@@ -70,6 +72,13 @@ const chatInviteForm = ref({
 });
 
 const messages = ref<any>([]);
+watch(messages.value, async (_new, _old) => {
+    await nextTick();
+    const div = document.getElementById("chat_container");
+    if (div !== null) {
+        div.scrollTop = div.scrollHeight;
+    }
+});
 </script>
 
 <template>
@@ -109,9 +118,11 @@ const messages = ref<any>([]);
                 <button class="w-[100px] self-end bg-slate-300 shadow-md rounded-md px-2"
                     type="submit">Send</button>
             </form>
-            <div class="flex flex-col gap-2 h-[400px] max-h-[400px]">
-                <p v-for="message in messages">{{message.user_id}}: {{ message.content }}</p>
-
+            <div>{{ connectionStatus }}</div>
+            <div 
+                id="chat_container"
+                class="flex flex-col gap-2 h-[400px] max-h-[400px] overflow-y-scroll">
+                <p v-for="message in messages">{{message.user}}: {{ message.message }}</p>
             </div>
             <form class="flex flex-col gap-2"
                 @submit.prevent="() => handleMessage()">

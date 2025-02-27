@@ -78,16 +78,17 @@ defmodule Chat.Router do
     end
   end
 
-  get "/chatroom/:id/:token" do
+  get "/chatroom/:chatroom_id/:token" do
     case validate_token(token) do
-      {:ok, claims} -> 
+      {:ok, _claims} -> 
         conn =
           conn
           |> Plug.Conn.put_resp_content_type("text/event-stream")
           |> Plug.Conn.send_chunked(200)
 
-        Chat.ConnectionHandler.add_connection(id, conn, claims["id"], self())
-        handle_message(conn, id)
+        {:ok, _pid} = Registry.register(Chat.Registry, chatroom_id, self())
+
+        stream_messages(conn, chatroom_id)
       :error -> 
         send_resp(conn, 400, "Failed to authenticate")
     end
@@ -118,17 +119,6 @@ defmodule Chat.Router do
     send_resp(conn, 404, "Not found!")
   end
 
-  defp keep_alive(conn, chatroom_id) do
-    Process.sleep(15_000)
-
-    case Plug.Conn.chunk(conn, ":\n\n") do
-      {:ok, _} -> keep_alive(conn, chatroom_id)
-      {:error, _} -> 
-        Chat.ConnectionHandler.remove_connection(chatroom_id, conn)
-        conn
-    end
-  end
-
   defp validate_token(token) when is_binary(token) do
     case Chat.Token.verify_token(token) do
       {:ok, claims} ->
@@ -152,18 +142,21 @@ defmodule Chat.Router do
     end
   end
 
-  defp handle_message(conn, id) do
+  defp stream_messages(conn, chatroom_id) do
     receive do
-      {:send_sse_message, conn, message, user_name} ->
-        Plug.Conn.chunk(conn, "data: {\"name\":\"#{user_name}\", \"message\":\"#{message}\"}\n\n")
+      {:message, msg} ->
+        case Plug.Conn.chunk(conn, "data: #{msg}") do
+          {:ok, _} -> stream_messages(conn, chatroom_id)
+          {:error, _} -> 
+            Process.exit(self(), :shutdown)
+        end
     after
-      15_000 ->  
+      15_000 ->
         case Plug.Conn.chunk(conn, ":\n\n") do
-            {:error,_} -> Chat.ConnectionHandler.remove_connection(id, conn)
-            :ok
-            _ -> :ok
+          {:ok, _} -> stream_messages(conn, chatroom_id)
+          {:error, _} -> 
+            Process.exit(self(), :shutdown)
         end
     end
-    handle_message(conn, id)
   end
 end
