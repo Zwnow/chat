@@ -80,15 +80,20 @@ defmodule Chat.Router do
 
   get "/chatroom/:chatroom_id/:token" do
     case validate_token(token) do
-      {:ok, _claims} -> 
-        conn =
-          conn
-          |> Plug.Conn.put_resp_content_type("text/event-stream")
-          |> Plug.Conn.send_chunked(200)
+      {:ok, claims} -> 
+        %{"id" => id} = claims
+        if chatroom_member?(chatroom_id, id) do
+          conn =
+            conn
+            |> Plug.Conn.put_resp_content_type("text/event-stream")
+            |> Plug.Conn.send_chunked(200)
 
-        {:ok, _pid} = Registry.register(Chat.Registry, chatroom_id, self())
+          {:ok, _pid} = Registry.register(Chat.Registry, chatroom_id, self())
 
-        stream_messages(conn, chatroom_id)
+          stream_messages(conn, chatroom_id)
+        else
+          send_resp(conn, 400, "Not a chatroom member")
+        end
       :error -> 
         send_resp(conn, 400, "Failed to authenticate")
     end
@@ -97,19 +102,22 @@ defmodule Chat.Router do
   post "/message/:chatroom_id" do
     case validate_token(conn) do
       {:ok, claims} -> 
-        id = claims["id"]
-        user = Chat.User |> Ecto.Query.where(id: ^id) |> Chat.Repo.one()
-
-        if user do
-          updated_conn = %Plug.Conn{conn | body_params: Map.merge(conn.body_params, %{"user_id" => user.id, "user_name" => user.user_name, "chatroom" => chatroom_id})}
-          case Chat.Message.store_message(updated_conn.body_params) do
-            :ok -> 
-              send_resp(updated_conn, 200, "sent")
-            {:error, _} -> 
-              send_resp(updated_conn, 400, "failed to send")
+        %{"id" => id} = claims
+        if chatroom_member?(chatroom_id, id) do
+          user = Chat.User |> Ecto.Query.where(id: ^id) |> Chat.Repo.one()
+          if user do
+            updated_conn = %Plug.Conn{conn | body_params: Map.merge(conn.body_params, %{"user_id" => user.id, "user_name" => user.user_name, "chatroom" => chatroom_id})}
+            case Chat.Message.store_message(updated_conn.body_params) do
+              :ok -> 
+                send_resp(updated_conn, 200, "sent")
+              {:error, _} -> 
+                send_resp(updated_conn, 400, "failed to send")
+            end
+          else
+            send_resp(conn, 404, "User not found")
           end
         else
-          send_resp(conn, 404, "User not found")
+            send_resp(conn, 404, "Cant send to this chatroom")
         end
       :error -> send_resp(conn, 400, "Failed to authenticate")
     end
@@ -140,6 +148,14 @@ defmodule Chat.Router do
       _ ->
         :error
     end
+  end
+
+  defp chatroom_member?(chatroom_id, id) do
+    query = from room in "chatrooms",
+            where: room.user_id == ^id and room.id == ^chatroom_id
+
+    room = Chat.Repo.get(Chat.Chatroom, query)
+    room == nil
   end
 
   defp stream_messages(conn, chatroom_id) do
