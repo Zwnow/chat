@@ -99,6 +99,27 @@ defmodule Chat.Router do
     end
   end
 
+  post "/chatinvite" do
+    case validate_token(conn) do
+      {:ok, claims} ->
+        %{"id" => id} = claims
+        updated_conn = %Plug.Conn{conn | body_params: Map.merge(conn.body_params, %{"user_id" => id})}
+        case Chat.ChatInvitation.create(updated_conn.body_params) do
+          :ok -> send_resp(conn, 201, "Invitation sent")
+          {:error, msg} -> send_resp(conn, 400, msg)
+        end
+      :error -> send_resp(conn, 400, "Failed to authenticate")
+    end
+  end
+
+  post "/invitation/accept" do
+
+  end
+
+  post "/invitation/decline" do
+
+  end
+
   post "/message/:chatroom_id" do
     case validate_token(conn) do
       {:ok, claims} -> 
