@@ -19,17 +19,26 @@ onMounted(async () => {
     }
     loading.value = false;
 });
+
+const logout = () => {
+    localStorage.clear()
+    userStore.isAuthenticated = false
+    window.location.reload()
+}
 </script>
 
 <template>
   <header>
 
     <div class="wrapper">
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
+      <nav v-if="!userStore.isAuthenticated" class="flex gap-2">
+        <RouterLink to="/">Login</RouterLink>
         <RouterLink to="/register">Register</RouterLink>
-
+      </nav>
+      <nav v-else class="flex gap-2">
+        <RouterLink to="/profile">Profile</RouterLink>
         <RouterLink to="/invites">Invites</RouterLink>
+        <button @click="() => logout()">Logout</button>
       </nav>
     </div>
   </header>
@@ -37,6 +46,3 @@ onMounted(async () => {
   <RouterView v-if="!loading" />
 </template>
 
-<style scoped>
-
-</style>

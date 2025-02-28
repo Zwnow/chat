@@ -25,6 +25,17 @@ const form = ref({
     password: "",
 })
 
+const u1 = {
+    user_name: "test1",
+    email: "test1@mail.com",
+    password: "testuser",
+}
+
+const u2 = {
+    user_name: "test2",
+    email: "test2@mail.com",
+    password: "testuser",
+}
 </script>
 
 <template>
@@ -51,5 +62,16 @@ const form = ref({
                 class="bg-slate-300 w-[100px] rounded-md shadow-md"
                 type="submit">Register</button>
         </form>
+        <div class="flex gap-2 p-2">
+        <button 
+            class="bg-slate-300 w-[100px] rounded-md shadow-md"
+            @click="() => form = u1"
+            type="button">Prefill User 1</button>
+        <button 
+            class="bg-slate-300 w-[100px] rounded-md shadow-md"
+            @click="() => form = u2"
+            type="button">Prefill User 2</button>
+        </div>
+
     </main>
 </template>
