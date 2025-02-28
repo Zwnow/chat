@@ -97,12 +97,13 @@ export const useUserStore = defineStore('user', () => {
 
         if (r.status === 200) {
             const data = await r.json();
+            console.log(data)
             chatinvites.value = data.invites;
         }
     }
 
-    const answerInvite = async (invite: Chatinvite, accepted: boolean) => {
-        const r = await fetch("http://localhost/api/chatinvite/answer", {
+    const acceptInvite = async (invite: Chatinvite) => {
+        const r = await fetch("http://localhost:4000/invitation/accept", {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token.value}`,
@@ -110,15 +111,23 @@ export const useUserStore = defineStore('user', () => {
             },
             body: JSON.stringify({
                 invite_id: invite.id,
-                chatroom_id: invite.chatroom,
-                result: accepted,
+                chatroom: invite.chatroom,
             }),
         });
+    }
 
-        if (r.status === 200) {
-            let index = chatinvites.value.findIndex((inv: Chatinvite) => inv.id === invite.id);
-            chatinvites.value.splice(index, 1);
-        }
+    const declineInvite = async (invite: Chatinvite) => {
+        const r = await fetch("http://localhost:4000/invitation/decline", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token.value}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                invite_id: invite.id,
+                chatroom: invite.chatroom,
+            }),
+        });
     }
 
     return {
@@ -133,6 +142,7 @@ export const useUserStore = defineStore('user', () => {
         createChatroom,
         sendChatInvitation,
         getChatInvites,
-        answerInvite,
+        acceptInvite,
+        declineInvite,
     }
 });

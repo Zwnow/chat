@@ -36,7 +36,13 @@ defmodule Chat.Chatroom do
   end
 
   def get_chatrooms(user_id) do
-    result = Chat.Chatroom |> Ecto.Query.where(user_id: ^user_id) |> Chat.Repo.all() 
-    {:ok, result}
+    query =
+      from cm in Chat.ChatroomMember,
+        join: c in Chat.Chatroom,
+        on: cm.chatroom_id == c.id,
+        where: cm.user_id == ^user_id,
+        select: c
+
+    {:ok, Chat.Repo.all(query)}
   end
 end

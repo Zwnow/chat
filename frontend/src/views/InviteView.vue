@@ -11,12 +11,12 @@ onMounted(async () => {
 <template>
     <ul v-if="userStore.chatinvites">
         <div v-for="invite in userStore.chatinvites">
-            <p>{{ invite.from_user_name }}</p>
+            <p>Invitations</p>
             <button
-                @click="() => userStore.answerInvite(invite, true)"
+                @click="() => userStore.acceptInvite(invite)"
             >Accept</button>
             <button
-                @click="() => userStore.answerInvite(invite, false)"
+                @click="() => userStore.declineInvite(invite)"
             >Decline</button>
         </div>
     </ul>
