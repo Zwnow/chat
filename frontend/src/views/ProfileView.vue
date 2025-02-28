@@ -13,6 +13,7 @@ onMounted(async () => {
         let conn = sessionStorage.getItem("chatroom")
         if (conn !== null) {
             await connect(conn);
+            await userStore.getMessages();
         }
     } catch(e) {
         hasError.value = true;
@@ -21,14 +22,16 @@ onMounted(async () => {
 
 })
 
+
+
 const currentConnection = ref<EventSource|null>(null);
 const connect = async (chatroom: string) => {
     currentConnection.value = new EventSource(`http://localhost:4000/chatroom/${chatroom}/${userStore.token}`)
     sessionStorage.setItem("chatroom", chatroom)
 
+    userStore.activeChat = chatroom;
     currentConnection.value.onopen = function (event) {
         connectionStatus.value = "Connected"
-        userStore.activeChat = chatroom;
     }
 
     currentConnection.value.onmessage = function (event) {
@@ -57,7 +60,9 @@ const handleMessage = async () => {
             content: message.value,
         }),
     })
-    console.log(r);
+    if (r.status === 200) {
+        message.value = "";
+    }
 }
 
 const message = ref("");

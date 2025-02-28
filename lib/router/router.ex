@@ -53,7 +53,6 @@ defmodule Chat.Router do
     end
   end
 
-
   # App
   post "/chatroom" do
     case validate_token(conn) do
@@ -153,7 +152,10 @@ defmodule Chat.Router do
       {:ok, claims} -> 
         %{"id" => id} = claims
         if chatroom_member?(chatroom_id, id) do
-          user = Chat.User |> Ecto.Query.where(id: ^id) |> Chat.Repo.one()
+          user = Chat.User 
+            |> Ecto.Query.where(id: ^id) 
+            |> Chat.Repo.one()
+
           if user do
             updated_conn = %Plug.Conn{conn | body_params: Map.merge(conn.body_params, %{"user_id" => user.id, "user_name" => user.user_name, "chatroom" => chatroom_id})}
             case Chat.Message.store_message(updated_conn.body_params) do
@@ -169,6 +171,32 @@ defmodule Chat.Router do
             send_resp(conn, 404, "Cant send to this chatroom")
         end
       :error -> send_resp(conn, 400, "Failed to authenticate")
+    end
+  end
+
+  get "/message/:chatroom_id" do
+    case validate_token(conn) do
+      {:ok, claims} -> 
+        %{"id" => id} = claims
+        if chatroom_member?(chatroom_id, id) do
+          page = Map.get(conn.params, "page", "1") |> String.to_integer()
+          query = from m in Chat.Message,
+            join: u in Chat.User, on: m.user_id == u.id,
+            where: m.chatroom_id == ^chatroom_id,
+            order_by: [desc: m.inserted_at],
+            limit: 200,
+            offset: ^((page - 1) * 200),
+            select: %{
+              id: m.id,
+              content: m.content,
+              user_id: m.user_id,
+              user_name: u.user_name,
+              inserted_at: m.inserted_at
+            }
+
+          messages = Chat.Repo.all(query)
+          send_resp(conn, 200, Jason.encode!(%{messages: messages}))
+        end
     end
   end
 
@@ -206,19 +234,21 @@ defmodule Chat.Router do
   end
 
   defp stream_messages(conn, chatroom_id) do
+    Process.flag(:trap_exit, true)
+
     receive do
       {:message, msg} ->
         case Plug.Conn.chunk(conn, "data: #{msg}") do
           {:ok, _} -> stream_messages(conn, chatroom_id)
           {:error, _} -> 
-            Process.exit(self(), :shutdown)
+            {:halt, conn}
         end
     after
       15_000 ->
         case Plug.Conn.chunk(conn, ":\n\n") do
           {:ok, _} -> stream_messages(conn, chatroom_id)
           {:error, _} -> 
-            Process.exit(self(), :shutdown)
+            {:halt, conn}
         end
     end
   end

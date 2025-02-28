@@ -35,6 +35,7 @@ export const useUserStore = defineStore('user', () => {
     const activeChat = ref();
     const chatrooms = ref<Chatroom[]>([]);
     const chatinvites = ref<Chatinvite[]>([]);
+    const messages = ref([]);
 
     const authenticate = async () => {
         const r = await fetch("http://localhost:4000/validate-token", {
@@ -70,6 +71,16 @@ export const useUserStore = defineStore('user', () => {
         if (r.status === 200) {
             await getChatrooms();
         }
+    }
+
+    const getMessages = async () => {
+        const r = await fetch(`http://localhost:4000/message/${activeChat.value}?page=1`, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token.value}`,
+                "Content-Type": "application/json",
+            },
+        });
     }
 
     const sendChatInvitation = async (form: ChatInviteForm) => {
@@ -144,5 +155,7 @@ export const useUserStore = defineStore('user', () => {
         getChatInvites,
         acceptInvite,
         declineInvite,
+        getMessages,
+        messages,
     }
 });
