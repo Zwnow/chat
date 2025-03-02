@@ -32,3 +32,4 @@ Originally learned retail but changed careers a few years ago. Started out in ER
 # About the app
 I will document the different parts of the app within their corresponding folders.
 
+
